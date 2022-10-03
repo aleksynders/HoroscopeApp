@@ -5,6 +5,9 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
+using System.Text.RegularExpressions;
+using System.IO;
+using System.Diagnostics;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
@@ -75,7 +78,7 @@ namespace WPF7
                         MessageBox.Show("Возможно вы что-то не выбрали или/и не ввели!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                     else
                     {
-                        if ((Month.SelectedIndex + 1 == 2) && (Num.SelectedIndex + 1 == 30) || (Num.SelectedIndex + 1 == 31)) // Исключение для февраля
+                        if (((Month.SelectedIndex + 1 == 2) && (Num.SelectedIndex + 1 == 30)) || (((Month.SelectedIndex + 1 == 2) &&  (Num.SelectedIndex + 1 == 31)))) // Исключение для февраля
                         {
                             MessageBox.Show("Февраль короткий месяц, проверьте правильность данных!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                         }
@@ -129,6 +132,143 @@ namespace WPF7
                 }
             }
             catch { MessageBox.Show("Возможно вы что-то не выбрали или/и не ввели!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error); } // Ошибка на все случаи
+        }
+
+        string path;
+
+        private void StartOpen_Click(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog ofd = new Microsoft.Win32.OpenFileDialog();
+
+            var result = ofd.ShowDialog();
+
+            if (result == true)
+            {
+                path = ofd.FileName;
+            }
+            read();
+
+            Finish.Visibility = Visibility.Visible;
+        }
+        void read()
+        {
+            var lines = File.ReadAllLines(path, Encoding.Default);
+            string[] temp = new string[3];
+
+            StreamWriter sw = new StreamWriter(path, false, Encoding.Default);
+
+            int j = 0;
+            foreach (var line in lines)
+            {
+                string[] parts = line.Split(';');
+
+                if (j == 0)
+                {
+                    sw.Write($"{parts[0]};{parts[1]};{parts[2]};ДСГ;ЯГ");
+                    j++;
+                    sw.WriteLine();
+                }
+                else
+                {
+                    sw.Write($"{parts[0]};{parts[1]};{parts[2]}");
+                    for (int i = 0; i < temp.Length; i++)
+                    {
+                        if (Regex.IsMatch(parts[i], @"^[0-9]+$"))
+                        {
+                            temp[i] = parts[i];
+                        }
+                        else
+                        {
+                            temp[i] = "";
+                        }
+                    }
+                    if (!String.IsNullOrEmpty(temp[0]) && !String.IsNullOrEmpty(temp[1]))
+                    {
+                        int countDays = DateTime.DaysInMonth(DateTime.Now.Year, Convert.ToInt32(temp[1]) - 1);
+                        if (Convert.ToInt32(temp[0]) <= countDays)
+                        {
+                            int[] date = new int[2];
+                            string res = "";
+                            date[0] = Convert.ToInt32(temp[0]); // День рождения
+                            date[1] = Convert.ToInt32(temp[1]); // Месяц рождения
+                            try
+                            {
+                                switch (date[1])
+                                {
+                                    case 1: res = ((date[0] <= 30 ? "Мороз (Морозко, Трескун, Студенец)" : "Велес")); break;
+                                    case 2: res = ("Велес"); break;
+                                    case 3: res = ("Макошь"); break;
+                                    case 4: res = ("Жива"); break;
+                                    case 5: res = ((date[0] <= 14 ? "Ярила (Ярило)" : "Леля")); break;
+                                    case 6: res = (((date[0] <= 2 && date[0] != 24) ? "Леля" : ((date[0] <= 12 && date[0] > 2) ? "Кострома" : (date[0] == 24 ? "Иван Купала" : "Додола")))); break;
+                                    case 7: res = ((date[0] <= 6 ? "Додола" : "Лада")); break;
+                                    case 8: res = ((date[0] <= 28 ? "Перун" : "Сева")); break;
+                                    case 9: res = ((date[0] <= 13 ? "Сева" : ((date[0] > 13 && date[0] <= 27) ? "Рожаница" : "Сварожичи"))); break;
+                                    case 10: res = ((date[0] <= 15 ? "Сварожичи" : "Морена")); break;
+                                    case 11: res = ((date[0] <= 8 ? "Морена" : ((date[0] > 8 && date[0] <= 28) ? "Морена" : "Карачун"))); break;
+                                    case 12: res = ((date[0] <= 23 ? "Карачун" : "Мороз (Морозко, Трескун, Студенец)")); break;
+                                    default: res = "Неопределено"; break;
+                                }
+                                sw.Write($";{res}");
+                            }
+                            catch
+                            {
+                                sw.Write($";{res}");
+                            }
+                        }
+                        else
+                        {
+                            sw.Write($";Неопределено");
+                        }
+                    }
+                    else
+                    {
+                        sw.Write($";Неопределено");
+                    }
+                    if (!String.IsNullOrEmpty(temp[2]))
+                    {
+                        string res = "";
+                        try
+                        {
+                            int date = Convert.ToInt32(temp[2]);
+                            date %= 12;
+                            date++;
+                            switch (date)
+                            {
+                                case 1: res = ("Обезьяна"); break;
+                                case 2: res = ("Петух"); break;
+                                case 3: res = ("Собака"); break;
+                                case 4: res = ("Кабан"); break;
+                                case 5: res = ("Крыса"); break;
+                                case 6: res = ("Вол"); break;
+                                case 7: res = ("Тигр"); break;
+                                case 8: res = ("Кролик"); break;
+                                case 9: res = ("Дракон"); break;
+                                case 10: res = ("Змея"); break;
+                                case 11: res = ("Лошадь"); break;
+                                case 12: res = ("Овца"); break;
+                                default: res = "Неопределено"; break;
+                            }
+                        }
+                        catch
+                        {
+                            res = "Неопределено";
+                        }
+                        sw.Write($";{res}");
+                    }
+                    else
+                    {
+                        sw.Write($";Неопределено");
+                    }
+                    sw.WriteLine();
+                }
+            }
+            sw.Close();
+        }
+
+        private void Finish_Click(object sender, RoutedEventArgs e)
+        {
+            Process.Start(path);
         }
     }
 }
